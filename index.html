@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>แพ็กเกจ Go Go Trader</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,700;1,700&family=Prompt:ital,wght@0,400;0,600;0,700;0,800;1,800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg-deep: #040816;
+      --bg-navy: #0a1433;
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --cyan: #22d3ee;
+      --blue: #3b82f6;
+      --purple: #c084fc;
+      --magenta: #e879f9;
+      --green: #10b981;
+      --line: rgba(148, 163, 184, 0.14);
+      --card: rgba(11, 20, 48, 0.72);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background-color: var(--bg-deep);
+      background-image:
+        radial-gradient(circle at 15% 10%, rgba(34, 211, 238, 0.22) 0%, transparent 40%),
+        radial-gradient(circle at 88% 22%, rgba(192, 132, 252, 0.24) 0%, transparent 42%),
+        radial-gradient(circle at 50% 60%, rgba(59, 130, 246, 0.16) 0%, transparent 50%),
+        linear-gradient(180deg, #050a1c 0%, #091330 50%, #040816 100%);
+      background-attachment: fixed;
+      font-family: 'Prompt', system-ui, -apple-system, sans-serif;
+    }
+
+    .page {
+      position: relative;
+      width: min(100%, 520px);
+      min-height: 100vh;
+      min-height: 100svh;
+      margin: 0 auto;
+      padding: 32px 14px 44px;
+    }
+
+    .intro {
+      margin: 0 auto 26px;
+      text-align: center;
+    }
+
+    /* ป้ายแบรนด์ด้านบนสไตล์ Cyber Neon */
+    .eyebrow {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 12px;
+      padding: 7px 18px;
+      border: 1px solid rgba(56, 189, 248, 0.45);
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(14, 165, 233, 0.16), rgba(192, 132, 252, 0.16));
+      box-shadow:
+        0 0 20px rgba(56, 189, 248, 0.25),
+        inset 0 0 12px rgba(192, 132, 252, 0.2);
+      font-family: 'Chakra Petch', sans-serif;
+      font-style: italic;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background-clip: padding-box;
+    }
+
+    .eyebrow span {
+      background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #e879f9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
+    }
+
+    /* หัวข้อหลักสไตล์ AUTO GEN X (ตัวเอียง ไล่เฉด ฟ้า -> น้ำเงิน -> ม่วงชมพู + เรืองแสง) */
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 7.2vw, 35px);
+      font-weight: 800;
+      font-style: italic;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      background: linear-gradient(95deg, #38bdf8 0%, #60a5fa 35%, #a855f7 72%, #f0abfc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter:
+        drop-shadow(0 0 14px rgba(56, 189, 248, 0.38))
+        drop-shadow(0 0 26px rgba(192, 132, 252, 0.28));
+    }
+
+    .subtitle {
+      max-width: 420px;
+      margin: 10px auto 0;
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    /* การ์ดกระจกสีน้ำเงินเข้มเรืองแสง */
+    .table-card,
+    .price-card,
+    .trial-card {
+      position: relative;
+      border: 1px solid rgba(96, 165, 250, 0.28);
+      border-top-color: rgba(125, 211, 252, 0.5);
+      border-radius: 20px;
+      background: linear-gradient(160deg, rgba(16, 29, 66, 0.82) 0%, rgba(8, 15, 38, 0.88) 100%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      box-shadow:
+        0 18px 40px rgba(2, 6, 23, 0.75),
+        0 0 25px rgba(59, 130, 246, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    }
+
+    .table-card {
+      overflow: hidden;
+    }
+
+    /* ตารางปรับขนาดคอลัมน์ให้พอดี โดยไม่ใช้ horizontal scroll */
+    table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      text-align: center;
+    }
+
+    th,
+    td {
+      padding: 12px 4px;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+      word-break: normal;
+    }
+
+    thead th {
+      background: linear-gradient(90deg, rgba(34, 211, 238, 0.16), rgba(168, 85, 247, 0.18));
+      color: #e2e8f0;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(125, 211, 252, 0.25);
+    }
+
+    tbody tr:hover {
+      background: rgba(56, 189, 248, 0.06);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .features-table th:first-child,
+    .features-table td:first-child {
+      width: 40%;
+      padding-left: 11px;
+      text-align: left;
+      color: #e2e8f0;
+    }
+
+    .features-table th:not(:first-child),
+    .features-table td:not(:first-child) {
+      width: 20%;
+    }
+
+    /* สีชื่อแพ็กเกจสไตล์ Neon */
+    .plan-pro {
+      color: #93c5fd;
+      font-weight: 700;
+    }
+
+    .plan-premium {
+      color: #34d399;
+      font-weight: 800;
+      text-shadow: 0 0 12px rgba(52, 211, 153, 0.45);
+    }
+
+    .plan-ultimate {
+      background: linear-gradient(90deg, #38bdf8, #e879f9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+      font-style: italic;
+      filter: drop-shadow(0 0 8px rgba(232, 121, 249, 0.4));
+    }
+
+    .yes {
+      color: #22d3ee;
+      font-size: 17px;
+      font-weight: 900;
+      text-shadow: 0 0 10px rgba(34, 211, 238, 0.65);
+    }
+
+    .no {
+      color: #475569;
+    }
+
+    .price-grid {
+      display: grid;
+      gap: 18px;
+      margin-top: 24px;
+    }
+
+    .price-card {
+      min-width: 0;
+      padding: 18px 12px 14px;
+      overflow: hidden;
+    }
+
+    .price-card h2 {
+      margin: 0 0 14px;
+      font-size: 19px;
+      font-weight: 800;
+      font-style: italic;
+      line-height: 1.35;
+      background: linear-gradient(90deg, #38bdf8 0%, #818cf8 60%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.3));
+    }
+
+    .price-card.average h2 {
+      background: linear-gradient(90deg, #60a5fa 0%, #c084fc 55%, #f0abfc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.35));
+    }
+
+    .price-card th,
+    .price-card td {
+      padding: 11px 3px;
+      font-size: 11px;
+      color: #f1f5f9;
+    }
+
+    .price-card th:first-child,
+    .price-card td:first-child {
+      text-align: left;
+      padding-left: 3px;
+    }
+
+    .package-price th:first-child,
+    .package-price td:first-child {
+      width: 23%;
+    }
+
+    .package-price th:nth-child(2),
+    .package-price td:nth-child(2),
+    .package-price th:nth-child(3),
+    .package-price td:nth-child(3) {
+      width: 22%;
+    }
+
+    .package-price th:nth-child(4),
+    .package-price td:nth-child(4) {
+      width: 33%;
+    }
+
+    .average-price th:first-child,
+    .average-price td:first-child {
+      width: 22%;
+    }
+
+    .average-price th:nth-child(2),
+    .average-price td:nth-child(2) {
+      width: 29%;
+    }
+
+    .average-price th:nth-child(3),
+    .average-price td:nth-child(3),
+    .average-price th:nth-child(4),
+    .average-price td:nth-child(4) {
+      width: 24.5%;
+    }
+
+    .note {
+      margin: 16px 4px 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* กล่อง CTA ด้านล่างสไตล์ Futuristic Neon */
+    .trial-card {
+      margin-top: 28px;
+      padding: 26px 16px;
+      border: 1px solid rgba(192, 132, 252, 0.45);
+      border-top-color: rgba(56, 189, 248, 0.65);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(56, 189, 248, 0.2), transparent 65%),
+        linear-gradient(155deg, rgba(18, 33, 77, 0.9), rgba(10, 18, 45, 0.95));
+      text-align: center;
+      box-shadow:
+        0 20px 45px rgba(2, 6, 23, 0.8),
+        0 0 32px rgba(168, 85, 247, 0.22);
+    }
+
+    .trial-icon {
+      display: grid;
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 12px;
+      place-items: center;
+      border-radius: 17px;
+      background: linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(192, 132, 252, 0.25));
+      border: 1px solid rgba(125, 211, 252, 0.45);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+      font-size: 25px;
+    }
+
+    .trial-card h2 {
+      margin: 0 0 8px;
+      font-size: 23px;
+      font-weight: 800;
+      font-style: italic;
+      line-height: 1.35;
+      background: linear-gradient(90deg, #ffffff 10%, #bae6fd 55%, #f5d0fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .trial-card p {
+      margin: 0;
+      color: #cbd5e1;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .signup-button {
+      display: block;
+      width: 100%;
+      margin-top: 20px;
+      padding: 16px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 15px;
+      background: linear-gradient(95deg, #06b6d4 0%, #3b82f6 50%, #a855f7 100%);
+      box-shadow:
+        0 10px 28px rgba(59, 130, 246, 0.45),
+        0 0 20px rgba(168, 85, 247, 0.35);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 800;
+      text-align: center;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .signup-button:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 14px 34px rgba(56, 189, 248, 0.6),
+        0 0 28px rgba(192, 132, 252, 0.5);
+    }
+
+    @media (max-width: 380px) {
+      .page {
+        padding-right: 10px;
+        padding-left: 10px;
+      }
+
+      .features-table th,
+      .features-table td {
+        padding: 10px 2px;
+        font-size: 10.5px;
+      }
+
+      .features-table th:first-child,
+      .features-table td:first-child {
+        padding-left: 8px;
+      }
+
+      .price-card {
+        padding-right: 8px;
+        padding-left: 8px;
+      }
+
+      .price-card th,
+      .price-card td {
+        padding-right: 2px;
+        padding-left: 2px;
+        font-size: 10px;
+      }
+
+      .price-card h2 {
+        font-size: 17px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="page">
+    <section class="intro" aria-labelledby="packages-title">
+      <div class="eyebrow"><span>GO GO TRADER · AI PACKAGES</span></div>
+      <h1 id="packages-title">เลือกแพ็กเกจที่เหมาะกับสไตล์การลงทุน</h1>
+      <p class="subtitle">
+        เปรียบเทียบสิทธิ์การใช้งานและราคาที่คุ้มค่าที่สุดสำหรับคุณ
+      </p>
+    </section>
+
+    <section class="table-card" aria-label="ตารางเปรียบเทียบสิทธิ์การใช้งาน">
+      <table class="features-table">
+        <thead>
+          <tr>
+            <th>สิทธิ์การใช้งาน</th>
+            <th class="plan-pro">Pro</th>
+            <th class="plan-premium">Premium</th>
+            <th class="plan-ultimate">Ultimate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Search / addStock</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+          </tr>
+          <tr>
+            <td>Screener SET100++</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+          </tr>
+          <tr>
+            <td>US Stocks / Gold / BTC</td>
+            <td class="no">–</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+          </tr>
+          <tr>
+            <td>Ask AI</td>
+            <td class="no">–</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+          </tr>
+          <tr>
+            <td>AI %CMPR</td>
+            <td class="no">–</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+          </tr>
+          <tr>
+            <td>SuperTrend</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+            <td class="yes">✓</td>
+          </tr>
+          <tr>
+            <td>ZoneBreakOut</td>
+            <td class="no">–</td>
+            <td class="no">–</td>
+            <td class="yes">✓</td>
+          </tr>
+          <tr>
+            <td>S/R + Fibonacci</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+            <td class="yes">✓</td>
+          </tr>
+          <tr>
+            <td>โควตา Add Stock</td>
+            <td>10 ตัว</td>
+            <td>20 ตัว</td>
+            <td>30 ตัว</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <div class="price-grid">
+      <section class="price-card" aria-labelledby="package-price-title">
+        <h2 id="package-price-title">ราคาแพ็กเกจ</h2>
+
+        <table class="package-price">
+          <thead>
+            <tr>
+              <th>แพ็กเกจ</th>
+              <th>6 เดือน</th>
+              <th>รายปี</th>
+              <th>โบนัสรายปี</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="plan-pro"><strong>Pro</strong></td>
+              <td>720 บาท</td>
+              <td>1,440 บาท</td>
+              <td class="no">–</td>
+            </tr>
+            <tr>
+              <td class="plan-premium">Premium</td>
+              <td>1,500 บาท</td>
+              <td>3,000 บาท</td>
+              <td class="plan-premium">+1 เดือน</td>
+            </tr>
+            <tr>
+              <td class="plan-ultimate">Ultimate</td>
+              <td>2,100 บาท</td>
+              <td>4,200 บาท</td>
+              <td class="plan-ultimate">+3 เดือน</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="price-card average" aria-labelledby="average-price-title">
+        <h2 id="average-price-title">
+          ราคาเฉลี่ยต่อเดือนและต่อวัน (เมื่อสมัครรายปี)
+        </h2>
+
+        <table class="average-price">
+          <thead>
+            <tr>
+              <th>แพ็กเกจ</th>
+              <th>อายุใช้งานรวมโบนัส</th>
+              <th>เฉลี่ย/เดือน</th>
+              <th>เฉลี่ย/วัน</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="plan-pro"><strong>Pro</strong></td>
+              <td>12 เดือน</td>
+              <td>120 บาท</td>
+              <td>3.95 บาท</td>
+            </tr>
+            <tr>
+              <td class="plan-premium">Premium</td>
+              <td>13 เดือน</td>
+              <td>230.77 บาท</td>
+              <td>7.59 บาท</td>
+            </tr>
+            <tr>
+              <td class="plan-ultimate">Ultimate</td>
+              <td>15 เดือน</td>
+              <td>280 บาท</td>
+              <td>9.21 บาท</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <p class="note">
+      *ราคาเฉลี่ยเป็นการคำนวณจากค่าสมัครรายปีหารด้วยระยะเวลาใช้งานรวมโบนัส
+      ไม่ใช่แพ็กเกจสมัครรายเดือน
+    </p>
+
+    <section class="trial-card" id="สมัคร" aria-labelledby="signup-title">
+      <div class="trial-icon">🟢</div>
+      <h2 id="signup-title">เข้าสู่การสมัคร Go Go Trader</h2>
+      <p>สมัครและเริ่มต้นใช้งานผ่าน LINE</p>
+      <a class="signup-button" href="https://gogotrader.site/">
+        เข้าสู่การสมัคร Go Go Trader
+      </a>
+    </section>
+  </main>
+</body>
+</html>
